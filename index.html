@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Willst du mein Valentinsdate sein?</title>
+
+    <style>
+      :root {
+        --bg1: #ffdde1;
+        --bg2: #ee9ca7;
+        --card: #ffffffcc;
+        --yes: #ff3b6b;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family:
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Arial,
+          sans-serif;
+        background: radial-gradient(circle at top, var(--bg1), var(--bg2));
+        overflow: hidden;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .card {
+        width: min(520px, 92vw);
+        background: var(--card);
+        backdrop-filter: blur(12px);
+        border-radius: 24px;
+        padding: 26px 18px;
+        box-shadow: 0 20px 60px #00000025;
+        text-align: center;
+        position: relative;
+      }
+
+      h1 {
+        margin: 10px 0 8px;
+        font-size: clamp(22px, 5vw, 32px);
+      }
+
+      p {
+        margin: 0 0 18px;
+        opacity: 0.8;
+      }
+
+      /* ROMANTISCHER BILDERRAHMEN */
+      .romantic-frame {
+        width: 220px;
+        height: 220px;
+        margin: 0 auto 18px;
+        padding: 14px;
+        border-radius: 35px;
+        background: linear-gradient(135deg, #ff6a88, #ff99ac, #ffd1dc);
+        box-shadow:
+          0 15px 35px rgba(255, 105, 135, 0.4),
+          0 5px 15px rgba(0, 0, 0, 0.2);
+        animation: glow 2.5s ease-in-out infinite alternate;
+      }
+
+      .romantic-frame img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 25px;
+        display: block;
+      }
+
+      @keyframes glow {
+        from {
+          box-shadow:
+            0 15px 35px rgba(255, 105, 135, 0.4),
+            0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        to {
+          box-shadow:
+            0 20px 45px rgba(255, 105, 135, 0.7),
+            0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+      }
+
+      /* Button-Bereich (wichtig fürs Wegspringen) */
+      .btn-area {
+        position: relative;
+        width: min(420px, 100%);
+        height: 62px; /* genug Platz zum Springen */
+        margin: 10px auto 0;
+      }
+
+      button {
+        border: 0;
+        padding: 14px 18px;
+        border-radius: 14px;
+        font-size: 16px;
+        cursor: pointer;
+        box-shadow: 0 10px 20px #0000001a;
+        user-select: none;
+        touch-action: manipulation;
+        position: absolute; /* damit wir exakt platzieren können */
+        top: 0;
+        transition: transform 0.08s ease;
+      }
+      button:active {
+        transform: scale(0.98);
+      }
+
+      #yes {
+        background: var(--yes);
+        color: white;
+        left: 0;
+        width: 48%;
+      }
+
+      #no {
+        background: #111;
+        color: white;
+        right: 0;
+        width: 48%;
+      }
+
+      .result {
+        margin-top: 16px;
+        font-weight: 700;
+        font-size: 18px;
+        min-height: 26px;
+      }
+
+      canvas {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      /* SCHWEBENDE HERZEN */
+      .float-heart {
+        position: absolute;
+        bottom: -40px;
+        font-size: 20px;
+        opacity: 0.6;
+        animation: floatUp linear forwards;
+        pointer-events: none;
+      }
+      @keyframes floatUp {
+        to {
+          transform: translateY(-110vh) translateX(var(--dx));
+          opacity: 0;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <canvas id="confetti"></canvas>
+
+    <div class="card">
+      <div class="romantic-frame">
+        <img src="foto.jpg" alt="Unser Foto" />
+      </div>
+
+      <h1>Marti, Willst du mein Valentine sein?</h1>
+      <p>Überlegs dir gut...</p>
+
+      <div class="btn-area" id="btnArea">
+        <button id="yes">Ja 💖</button>
+        <button id="no">Nein 🙃</button>
+      </div>
+
+      <div class="result" id="result"></div>
+    </div>
+
+    <script>
+      // ===== Herzen im Hintergrund =====
+      const hearts = ["💖", "💗", "💘", "💕", "💞", "❤️"];
+      function spawnHeart() {
+        const h = document.createElement("div");
+        h.className = "float-heart";
+        h.textContent = hearts[Math.floor(Math.random() * hearts.length)];
+        h.style.left = Math.random() * 100 + "vw";
+        h.style.fontSize = 16 + Math.random() * 22 + "px";
+        h.style.animationDuration = 5 + Math.random() * 5 + "s";
+        h.style.setProperty("--dx", Math.random() * 120 - 60 + "px");
+        document.body.appendChild(h);
+        setTimeout(() => h.remove(), 10000);
+      }
+      setInterval(spawnHeart, 500);
+
+      // ===== Button-Logik (Mobile-safe) =====
+      const area = document.getElementById("btnArea");
+      const noBtn = document.getElementById("no");
+      const yesBtn = document.getElementById("yes");
+      const result = document.getElementById("result");
+
+      const noMessages = [
+        "Bist du sicher? 🥺",
+        "Wirklich wirklich sicher?",
+        "Überleg nochmal 😭",
+        "Das macht mich traurig…",
+        "Letzte Chance 😳",
+        "Ok… aber wie wär’s mit JA?",
+      ];
+      let noCount = 0;
+
+      function clamp(n, min, max) {
+        return Math.max(min, Math.min(max, n));
+      }
+
+      function moveNoInsideArea() {
+        // Maße vom Bereich (relativ)
+        const rect = area.getBoundingClientRect();
+
+        // Button-Größe (kann bei responsive variieren)
+        const btnW = noBtn.offsetWidth;
+        const btnH = noBtn.offsetHeight;
+
+        // Maximaler Platz innerhalb des Bereichs
+        const maxX = rect.width - btnW;
+        const maxY = rect.height - btnH;
+
+        // Zufällige Position
+        const x = clamp(Math.random() * maxX, 0, maxX);
+        const y = clamp(Math.random() * maxY, 0, maxY);
+
+        // Setzen (innerhalb der Area)
+        noBtn.style.left = x + "px";
+        noBtn.style.top = y + "px";
+        noBtn.style.right = "auto"; // wichtig, sonst gewinnt "right:0" aus CSS
+      }
+
+      // Auf Handy: erst beim Tippen wegspringen
+      function onNoTap(e) {
+        e.preventDefault();
+        noCount++;
+        result.textContent =
+          noMessages[Math.min(noCount - 1, noMessages.length - 1)];
+        moveNoInsideArea();
+      }
+
+      // Touch + Click absichern (damit es überall läuft)
+      noBtn.addEventListener("touchstart", onNoTap, { passive: false });
+      noBtn.addEventListener("click", onNoTap);
+
+      yesBtn.addEventListener("click", () => {
+        result.textContent = "Hattest eh keine andere Wahl Banane";
+        startConfetti(1500);
+      });
+
+      // ===== Konfetti =====
+      const canvas = document.getElementById("confetti");
+      const ctx = canvas.getContext("2d");
+
+      function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+      window.addEventListener("resize", resize);
+      resize();
+
+      let pieces = [];
+      function startConfetti(ms) {
+        const end = Date.now() + ms;
+        pieces = [];
+        for (let i = 0; i < 180; i++) {
+          pieces.push({
+            x: Math.random() * canvas.width,
+            y: -20 - Math.random() * 100,
+            r: 3 + Math.random() * 4,
+            vx: -2 + Math.random() * 4,
+            vy: 2 + Math.random() * 5,
+          });
+        }
+        (function frame() {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          for (const p of pieces) {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.03;
+            ctx.fillRect(p.x, p.y, p.r, p.r);
+          }
+          pieces = pieces.filter((p) => p.y < canvas.height);
+          if (Date.now() < end || pieces.length > 0) {
+            requestAnimationFrame(frame);
+          } else {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+          }
+        })();
+      }
+
+      // Beim Laden einmal eine Position vorbereiten (optional)
+      // moveNoInsideArea();
+    </script>
+  </body>
+</html>
